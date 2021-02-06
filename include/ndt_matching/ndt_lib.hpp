@@ -4,17 +4,15 @@
 #include "ndt_matching/visibility_control.h"
 #include <string>
 
-namespace ndt_matching
-{
+namespace ndt_matching {
 
-class NdtLib
-{
+class NdtLib {
 public:
   NdtLib(std::string message);
 
   virtual ~NdtLib();
 };
 
-}  // namespace ndt_matching
+} // namespace ndt_matching
 
-#endif  // NDT_MATCHING__NDT_LIB_HPP_
+#endif // NDT_MATCHING__NDT_LIB_HPP_
