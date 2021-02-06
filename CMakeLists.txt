@@ -48,7 +48,7 @@ install(
   RUNTIME DESTINATION bin
 )
 
-include_directories(${PCL_INCLUDE_DIRS})
+include_directories(SYSTEM ${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 
 add_executable(ndt_node src/ndt_node.cpp)
