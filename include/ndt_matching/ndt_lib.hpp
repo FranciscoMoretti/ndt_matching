@@ -11,6 +11,8 @@ public:
   NdtLib(std::string message);
 
   virtual ~NdtLib();
+
+  int RunNdtMatching();
 };
 
 } // namespace ndt_matching

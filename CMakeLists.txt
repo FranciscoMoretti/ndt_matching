@@ -21,6 +21,7 @@ find_package(ament_cmake_ros REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+find_package(PCL 1.5 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils)
 find_package(std_msgs REQUIRED)
@@ -47,6 +48,9 @@ install(
   RUNTIME DESTINATION bin
 )
 
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+
 add_executable(ndt_node src/ndt_node.cpp)
 
 ament_target_dependencies(ndt_node
@@ -58,7 +62,7 @@ ament_target_dependencies(ndt_node
 target_include_directories(ndt_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(ndt_node ndt_lib)
+target_link_libraries(ndt_node ndt_lib ${PCL_LIBRARIES})
 
 install(TARGETS ndt_node
   EXPORT export_${PROJECT_NAME}
