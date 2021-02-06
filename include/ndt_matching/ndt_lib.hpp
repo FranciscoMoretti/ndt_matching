@@ -12,7 +12,7 @@ public:
 
   virtual ~NdtLib();
 
-  int RunNdtMatching();
+  int run_ndt_matching();
 };
 
 } // namespace ndt_matching

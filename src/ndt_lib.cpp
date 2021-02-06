@@ -19,7 +19,7 @@ NdtLib::NdtLib(std::string message) {
   std::cout << "ndt_lib constructed by node " << message << std::endl;
 }
 
-int NdtLib::RunNdtMatching() {
+int NdtLib::run_ndt_matching() {
 
   // Loading first scan of room.
   pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud(
