@@ -4,10 +4,8 @@
 #include <thread>
 
 #include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
 
 #include <pcl/filters/approximate_voxel_grid.h>
-#include <pcl/registration/ndt.h>
 
 #include <pcl/visualization/pcl_visualizer.h>
 
@@ -15,24 +13,38 @@ using namespace std::chrono_literals;
 
 namespace ndt_matching {
 
-NdtLib::NdtLib(std::string message) {
-  std::cout << "ndt_lib constructed by node " << message << std::endl;
+NdtLib::NdtLib() {
+  // Setting scale dependent NDT parameters
+  // Setting minimum transformation difference for termination condition.
+  ndt.setTransformationEpsilon(0.01);
+  // Setting maximum step size for More-Thuente line search.
+  ndt.setStepSize(0.1);
+  // Setting Resolution of NDT grid structure (VoxelGridCovariance).
+  ndt.setResolution(1.0);
+
+  // Setting max number of registration iterations.
+  ndt.setMaximumIterations(35);
+}
+
+void NdtLib::point_cloud_map_callback(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud) {
+  // Loading first scan of room.
+  _target_cloud = target_cloud;
+
+  //   if (pcl::io::loadPCDFile<pcl::PointXYZ>("map.pcd", *target_cloud) == -1)
+  //   // if (pcl::io::loadPCDFile<pcl::PointXYZ> ("room_scan1.pcd",
+  //   *target_cloud)
+  //   // == -1)
+  //   {
+  //     PCL_ERROR("Couldn't read file room_scan1.pcd \n");
+  //   }
+  std::cout << "Loaded " << target_cloud->size()
+            << " data points from room_scan1.pcd" << std::endl;
+  // Setting point cloud to be aligned to.
+  ndt.setInputTarget(target_cloud);
 }
 
 int NdtLib::run_ndt_matching() {
-
-  // Loading first scan of room.
-  pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
-  if (pcl::io::loadPCDFile<pcl::PointXYZ>("map.pcd", *target_cloud) == -1)
-  // if (pcl::io::loadPCDFile<pcl::PointXYZ> ("room_scan1.pcd", *target_cloud)
-  // == -1)
-  {
-    PCL_ERROR("Couldn't read file room_scan1.pcd \n");
-    return (-1);
-  }
-  std::cout << "Loaded " << target_cloud->size()
-            << " data points from room_scan1.pcd" << std::endl;
 
   // Loading second scan of room from new perspective.
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(
@@ -59,24 +71,8 @@ int NdtLib::run_ndt_matching() {
   std::cout << "Filtered cloud contains " << filtered_cloud->size()
             << " data points from room_scan2.pcd" << std::endl;
 
-  // Initializing Normal Distributions Transform (NDT).
-  pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt;
-
-  // Setting scale dependent NDT parameters
-  // Setting minimum transformation difference for termination condition.
-  ndt.setTransformationEpsilon(0.01);
-  // Setting maximum step size for More-Thuente line search.
-  ndt.setStepSize(0.1);
-  // Setting Resolution of NDT grid structure (VoxelGridCovariance).
-  ndt.setResolution(1.0);
-
-  // Setting max number of registration iterations.
-  ndt.setMaximumIterations(35);
-
   // Setting point cloud to be aligned.
   ndt.setInputSource(filtered_cloud);
-  // Setting point cloud to be aligned to.
-  ndt.setInputTarget(target_cloud);
 
   // Set initial alignment estimate found using robot odometry.
   Eigen::AngleAxisf init_rotation(0.6931 + 1.8, Eigen::Vector3f::UnitZ());
@@ -107,8 +103,8 @@ int NdtLib::run_ndt_matching() {
 
   // Coloring and visualizing target cloud (red).
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> target_color(
-      target_cloud, 255, 0, 0);
-  viewer_final->addPointCloud<pcl::PointXYZ>(target_cloud, target_color,
+      _target_cloud, 255, 0, 0);
+  viewer_final->addPointCloud<pcl::PointXYZ>(_target_cloud, target_color,
                                              "target cloud");
   viewer_final->setPointCloudRenderingProperties(
       pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "target cloud");

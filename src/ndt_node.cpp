@@ -4,9 +4,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rcutils/cmdline_parser.h"
-#include <ndt_matching/ndt_lib.hpp>
-
 #include "std_msgs/msg/string.hpp"
+#include <ndt_matching/ndt_lib.hpp>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 void print_usage() {
@@ -18,6 +19,18 @@ void print_usage() {
          "chatter.\n");
 }
 
+pcl::PointCloud<pcl::PointXYZ>::Ptr
+cloud_cb(const sensor_msgs::msg::PointCloud2::SharedPtr &input) {
+
+  pcl::PCLPointCloud2 pcl_pc2;
+  pcl_conversions::toPCL(*input, pcl_pc2);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(
+      new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromPCLPointCloud2(pcl_pc2, *temp_cloud);
+  // do stuff with temp_cloud here
+  return temp_cloud;
+}
+
 // Create a Listener class that subclasses the generic rclcpp::Node base class.
 // The main function below will instantiate the class as a ROS node.
 class Listener : public rclcpp::Node {
@@ -25,6 +38,9 @@ public:
   explicit Listener(const std::string &topic_name,
                     const std::string &topic_name2 = "map")
       : Node("listener") {
+
+    ndtlib = ndt_matching::NdtLib();
+
     // Create a callback function for when messages are received.
     // Variations of this function also exist using, for example UniquePtr for
     // zero-copy transport.
@@ -33,7 +49,6 @@ public:
       RCLCPP_INFO(this->get_logger(), "I heard: [%s]",
                   msg->header.frame_id.c_str());
       // TODO:
-      ndt_matching::NdtLib ndtlib = ndt_matching::NdtLib(msg->header.frame_id);
       // here you call NdtLib function and pass in the msg as input
       // return a pose message and publish it as
       // https://github.com/ros2/common_interfaces/blob/master/geometry_msgs/msg/PoseStamped.msg
@@ -41,10 +56,8 @@ public:
 
     auto callback2 =
         [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) -> void {
-      RCLCPP_INFO(this->get_logger(), "I heard: [%s]",
-                  msg->header.frame_id.c_str());
       // TODO: here you get your map point cloud (one time only)
-      ndt_matching::NdtLib ndtlib = ndt_matching::NdtLib(msg->header.frame_id);
+      this->map_callback(msg);
     };
 
     // Create a subscription to the topic which can be matched with one or more
@@ -62,6 +75,16 @@ public:
 private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub2_;
+
+  ndt_matching::NdtLib ndtlib;
+
+  void map_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+    RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
+                msg->header.frame_id.c_str());
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud = cloud_cb(msg);
+    ndtlib.point_cloud_map_callback(plc_point_cloud);
+  }
 };
 
 int main(int argc, char *argv[]) {
