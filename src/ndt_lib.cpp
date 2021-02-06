@@ -1,14 +1,13 @@
 #include "ndt_matching/ndt_lib.hpp"
 
-namespace ndt_matching
-{
+#include <iostream>
 
-NdtLib::NdtLib()
-{
+namespace ndt_matching {
+
+NdtLib::NdtLib(std::string message) {
+  std::cout << "ndt_lib constructed by node " << message << std::endl;
 }
 
-NdtLib::~NdtLib()
-{
-}
+NdtLib::~NdtLib() {}
 
-}  // namespace ndt_matching
+} // namespace ndt_matching

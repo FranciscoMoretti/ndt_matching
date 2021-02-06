@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 
+#include <ndt_matching/ndt_lib.hpp>
 #include "rclcpp/rclcpp.hpp"
 #include "rcutils/cmdline_parser.h"
 
@@ -32,6 +33,7 @@ public:
       {
         RCLCPP_INFO(this->get_logger(), "I heard: [%s]", msg->header.frame_id.c_str());
         //TODO:
+        ndt_matching::NdtLib ndtlib = ndt_matching::NdtLib(msg->header.frame_id);
         // here you call NdtLib function and pass in the msg as input
         // return a pose message and publish it as https://github.com/ros2/common_interfaces/blob/master/geometry_msgs/msg/PoseStamped.msg
       };
@@ -41,6 +43,7 @@ public:
       {
         RCLCPP_INFO(this->get_logger(), "I heard: [%s]", msg->header.frame_id.c_str());
         //TODO: here you get your map point cloud (one time only)
+        ndt_matching::NdtLib ndtlib = ndt_matching::NdtLib(msg->header.frame_id);
       };
 
     // Create a subscription to the topic which can be matched with one or more compatible ROS
