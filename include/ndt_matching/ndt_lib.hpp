@@ -22,8 +22,6 @@ public:
   void
   point_cloud_scan_callback(pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud);
 
-  int run_ndt_matching();
-
 private:
   // Initializing Normal Distributions Transform (NDT).
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt =
