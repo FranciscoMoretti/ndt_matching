@@ -32,16 +32,13 @@ class Listener : public rclcpp::Node
 public:
   explicit Listener(
     const std::string & topic_name,
-    const std::string & topic_name2 = "map")
+    const std::string & topic_name2 = "map",
+    const std::string & topic_name3 = "initial_pose")
   : Node("listener")
   {
 
     ndt_matching_localizer = ndt_matching::NdtLib();
 
-    // Temporarily hardcoded initialization
-    Eigen::AngleAxisf init_rotation(4.9, Eigen::Vector3f::UnitZ());
-    Eigen::Translation3f init_translation(2, -50, 0);
-    ndt_matching_localizer.set_initial_estimation(init_rotation, init_translation);
     // Create a subscription to the topic which can be matched with one or more
     // compatible ROS publishers. Note that not all publishers on the same topic
     // with the same type will be compatible: they must have compatible Quality
@@ -52,12 +49,16 @@ public:
     sub2_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       topic_name2, 1,
       std::bind(&Listener::map_callback, this, std::placeholders::_1));
-      publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose_estimation", 10);
+    sub3_ = this->create_subscription<geometry_msgs::msg::Pose>(
+      topic_name3, 1,
+      std::bind(&Listener::initial_pose_callback, this, std::placeholders::_1));
+    publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose_estimation", 10);
   }
 
 private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub2_;
+  rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr sub3_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_;
 
   rclcpp::TimerBase::SharedPtr timer_;
@@ -104,7 +105,7 @@ private:
     // Register a scan
     Eigen::Affine3d eigen_pose = 
       ndt_matching_localizer.point_cloud_scan_callback(plc_point_cloud).cast<double>();
-    
+
 
     geometry_msgs::msg::Pose pose_message = tf2::toMsg(eigen_pose);
     geometry_msgs::msg::PoseStamped message;
@@ -121,7 +122,21 @@ private:
               << ", " << pose_message.orientation.y << ", " << pose_message.orientation.z << ", "
               <<  pose_message.orientation.z << ")" << std::endl;
     std::cout << "-----------------------------------------------------------------" << std::endl;
-    }
+  }
+
+  void initial_pose_callback(const geometry_msgs::msg::Pose::SharedPtr msg)
+  {
+    // Set the initial pose estimation
+    RCLCPP_INFO(this->get_logger(), "I heard: initial_pose");
+
+    Eigen::Affine3f affine_f = Eigen::Affine3f(
+      Eigen::Translation3f(msg->position.x, msg->position.y, msg->position.z) *
+      Eigen::Quaternionf(msg->orientation.w,
+                         msg->orientation.x,
+                         msg->orientation.y,
+                         msg->orientation.z));
+    ndt_matching_localizer.set_initial_estimation(affine_f);
+  }
 };
 
 int main(int argc, char * argv[])

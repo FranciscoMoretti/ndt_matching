@@ -48,9 +48,9 @@ void NdtLib::point_cloud_map_callback(
   ndt.setInputTarget(target_cloud);
 }
 
-void NdtLib::set_initial_estimation( Eigen::AngleAxisf& init_rotation, Eigen::Translation3f& init_translation){
+void NdtLib::set_initial_estimation(Eigen::Transform<float, 3, Eigen::Affine>& init_estimation){
   // Set initial alignment estimate found using robot odometry.
-  _current_estimation = (init_translation * init_rotation).matrix();
+  _current_estimation = init_estimation.matrix();
 }
 
 Eigen::Transform<float, 3, Eigen::Affine> NdtLib::point_cloud_scan_callback(
