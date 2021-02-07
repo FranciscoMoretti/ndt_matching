@@ -29,32 +29,16 @@ public:
 
     ndtlib = ndt_matching::NdtLib();
 
-    // Create a callback function for when messages are received.
-    // Variations of this function also exist using, for example UniquePtr for
-    // zero-copy transport.
-    auto callback =
-        [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) -> void {
-      // TODO:
-      // here you call NdtLib function and pass in the msg as input
-      // return a pose message and publish it as
-      // https://github.com/ros2/common_interfaces/blob/master/geometry_msgs/msg/PoseStamped.msg
-      this->scan_callback(msg);
-    };
-
-    auto callback2 =
-        [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) -> void {
-      // TODO: here you get your map point cloud (one time only)
-      this->map_callback(msg);
-    };
-
     // Create a subscription to the topic which can be matched with one or more
     // compatible ROS publishers. Note that not all publishers on the same topic
     // with the same type will be compatible: they must have compatible Quality
     // of Service policies.
-    sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(topic_name,
-                                                              callback);
-    sub2_ = create_subscription<sensor_msgs::msg::PointCloud2>(topic_name2,
-                                                               callback2);
+    sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
+        topic_name, 10,
+        std::bind(&Listener::scan_callback, this, std::placeholders::_1));
+    sub2_ = create_subscription<sensor_msgs::msg::PointCloud2>(
+        topic_name2, 1,
+        std::bind(&Listener::map_callback, this, std::placeholders::_1));
     // TODO: create a pose publisher, see for reference
     // https://github.com/ros2/demos/blob/master/demo_nodes_cpp/src/topics/talker.cpp
   }
@@ -67,15 +51,15 @@ private:
   bool map_loaded = false;
 
   void map_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
-    // Only load the map once
+    // TODO: here you get your map point cloud (one time only)
+    // Ensure the map is only loaded once
     if (map_loaded) {
       return;
     }
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
                 msg->header.frame_id.c_str());
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud(
-        new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud;
     pcl::fromROSMsg(*msg, *plc_point_cloud);
     // Initialize the map
     ndtlib.point_cloud_map_callback(plc_point_cloud);
@@ -83,9 +67,15 @@ private:
   }
 
   void scan_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+    // Create a callback function for when messages are received.
+    // Variations of this function also exist using, for example UniquePtr for
+    // zero-copy transport.
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
                 msg->header.frame_id.c_str());
-
+    // TODO:
+    // here you call NdtLib function and pass in the msg as input
+    // return a pose message and publish it as
+    // https://github.com/ros2/common_interfaces/blob/master/geometry_msgs/msg/PoseStamped.msg
     pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud(
         new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*msg, *plc_point_cloud);
