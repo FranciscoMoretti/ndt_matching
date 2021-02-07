@@ -69,7 +69,7 @@ private:
   void map_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
   {
     // TODO: here you get your map point cloud (one time only)
-    // Ensure the map is only loaded once
+    // Ensure the map is loaded only once
     if (map_loaded) {
       return;
     }

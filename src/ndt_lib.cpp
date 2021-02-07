@@ -31,19 +31,8 @@ NdtLib::NdtLib()
 void NdtLib::point_cloud_map_callback(
   pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud)
 {
-  // Loading first scan of room.
-  // For now saving here for the visualizer
-  _target_cloud = target_cloud;
-
-  //   if (pcl::io::loadPCDFile<pcl::PointXYZ>("map.pcd", *target_cloud) == -1)
-  //   // if (pcl::io::loadPCDFile<pcl::PointXYZ> ("room_scan1.pcd",
-  //   *target_cloud)
-  //   // == -1)
-  //   {
-  //     PCL_ERROR("Couldn't read file room_scan1.pcd \n");
-  //   }
   std::cout << "Loaded " << target_cloud->size() <<
-    " data points from room_scan1.pcd" << std::endl;
+    " data points PointCloud map" << std::endl;
   // Setting point cloud to be aligned to.
   ndt.setInputTarget(target_cloud);
 }
@@ -56,20 +45,8 @@ void NdtLib::set_initial_estimation(Eigen::Transform<float, 3, Eigen::Affine>& i
 Eigen::Transform<float, 3, Eigen::Affine> NdtLib::point_cloud_scan_callback(
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud)
 {
-
-  // Loading second scan of room from new perspective.
-
-  // if (pcl::io::loadPCDFile<pcl::PointXYZ>("1517813094204086.pcd",
-  //                                         *input_cloud) == -1)
-  // // if (pcl::io::loadPCDFile<pcl::PointXYZ> ("room_scan2.pcd", *input_cloud)
-  // ==
-  // // -1
-  // {
-  //   PCL_ERROR("Couldn't read file room_scan2.pcd \n");
-  //   return (-1);
-  // }
   std::cout << "Loaded " << input_cloud->size() <<
-    " data points from room_scan2.pcd" << std::endl;
+    " data points from PointCloud scan" << std::endl;
 
   // Filtering input scan to roughly 10% of original size to increase speed of
   // registration.
