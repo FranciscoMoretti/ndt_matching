@@ -29,6 +29,7 @@ NdtLib::NdtLib() {
 void NdtLib::point_cloud_map_callback(
     pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud) {
   // Loading first scan of room.
+  // For now saving here for the visualizer
   _target_cloud = target_cloud;
 
   //   if (pcl::io::loadPCDFile<pcl::PointXYZ>("map.pcd", *target_cloud) == -1)
