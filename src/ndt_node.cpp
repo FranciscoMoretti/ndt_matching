@@ -10,22 +10,26 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-void print_usage() {
+void print_usage()
+{
   printf("Usage for listener app:\n");
   printf("listener [-t topic_name] [-h]\n");
   printf("options:\n");
   printf("-h : Print this help function.\n");
   printf("-t topic_name : Specify the topic on which to subscribe. Defaults to "
-         "chatter.\n");
+    "chatter.\n");
 }
 
 // Create a Listener class that subclasses the generic rclcpp::Node base class.
 // The main function below will instantiate the class as a ROS node.
-class Listener : public rclcpp::Node {
+class Listener : public rclcpp::Node
+{
 public:
-  explicit Listener(const std::string &topic_name,
-                    const std::string &topic_name2 = "map")
-      : Node("listener") {
+  explicit Listener(
+    const std::string & topic_name,
+    const std::string & topic_name2 = "map")
+  : Node("listener")
+  {
 
     ndtlib = ndt_matching::NdtLib();
 
@@ -34,11 +38,11 @@ public:
     // with the same type will be compatible: they must have compatible Quality
     // of Service policies.
     sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-        topic_name, 10,
-        std::bind(&Listener::scan_callback, this, std::placeholders::_1));
+      topic_name, 10,
+      std::bind(&Listener::scan_callback, this, std::placeholders::_1));
     sub2_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-        topic_name2, 1,
-        std::bind(&Listener::map_callback, this, std::placeholders::_1));
+      topic_name2, 1,
+      std::bind(&Listener::map_callback, this, std::placeholders::_1));
     // TODO: create a pose publisher, see for reference
     // https://github.com/ros2/demos/blob/master/demo_nodes_cpp/src/topics/talker.cpp
   }
@@ -50,14 +54,15 @@ private:
   ndt_matching::NdtLib ndtlib;
   bool map_loaded = false;
 
-  void map_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+  void map_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
+  {
     // TODO: here you get your map point cloud (one time only)
     // Ensure the map is only loaded once
     if (map_loaded) {
       return;
     }
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
-                msg->header.frame_id.c_str());
+      msg->header.frame_id.c_str());
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud;
     pcl::fromROSMsg(*msg, *plc_point_cloud);
@@ -66,25 +71,27 @@ private:
     map_loaded = true;
   }
 
-  void scan_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+  void scan_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
+  {
     // Create a callback function for when messages are received.
     // Variations of this function also exist using, for example UniquePtr for
     // zero-copy transport.
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
-                msg->header.frame_id.c_str());
+      msg->header.frame_id.c_str());
     // TODO:
     // here you call NdtLib function and pass in the msg as input
     // return a pose message and publish it as
     // https://github.com/ros2/common_interfaces/blob/master/geometry_msgs/msg/PoseStamped.msg
     pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud(
-        new pcl::PointCloud<pcl::PointXYZ>);
+      new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*msg, *plc_point_cloud);
     // Register a scan
     ndtlib.point_cloud_scan_callback(plc_point_cloud);
   }
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char * argv[])
+{
   // Force flush of the stdout buffer.
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
 
@@ -100,7 +107,7 @@ int main(int argc, char *argv[]) {
 
   // Parse the command line options.
   auto topic = std::string("points_raw");
-  char *cli_option = rcutils_cli_get_option(argv, argv + argc, "-t");
+  char * cli_option = rcutils_cli_get_option(argv, argv + argc, "-t");
   if (nullptr != cli_option) {
     topic = std::string(cli_option);
   }

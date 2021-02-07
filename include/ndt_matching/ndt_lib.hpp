@@ -6,9 +6,11 @@
 #include <pcl/registration/ndt.h>
 #include <string>
 
-namespace ndt_matching {
+namespace ndt_matching
+{
 
-class NdtLib {
+class NdtLib
+{
 public:
   NdtLib();
 
@@ -25,7 +27,7 @@ public:
 private:
   // Initializing Normal Distributions Transform (NDT).
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt =
-      pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>();
+    pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr _target_cloud = nullptr;
 };
 

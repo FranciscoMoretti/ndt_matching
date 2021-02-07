@@ -11,9 +11,11 @@
 
 using namespace std::chrono_literals;
 
-namespace ndt_matching {
+namespace ndt_matching
+{
 
-NdtLib::NdtLib() {
+NdtLib::NdtLib()
+{
   // Setting scale dependent NDT parameters
   // Setting minimum transformation difference for termination condition.
   ndt.setTransformationEpsilon(0.01);
@@ -27,7 +29,8 @@ NdtLib::NdtLib() {
 }
 
 void NdtLib::point_cloud_map_callback(
-    pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud) {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud)
+{
   // Loading first scan of room.
   // For now saving here for the visualizer
   _target_cloud = target_cloud;
@@ -39,14 +42,15 @@ void NdtLib::point_cloud_map_callback(
   //   {
   //     PCL_ERROR("Couldn't read file room_scan1.pcd \n");
   //   }
-  std::cout << "Loaded " << target_cloud->size()
-            << " data points from room_scan1.pcd" << std::endl;
+  std::cout << "Loaded " << target_cloud->size() <<
+    " data points from room_scan1.pcd" << std::endl;
   // Setting point cloud to be aligned to.
   ndt.setInputTarget(target_cloud);
 }
 
 void NdtLib::point_cloud_scan_callback(
-    pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud) {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud)
+{
 
   // Loading second scan of room from new perspective.
 
@@ -59,19 +63,19 @@ void NdtLib::point_cloud_scan_callback(
   //   PCL_ERROR("Couldn't read file room_scan2.pcd \n");
   //   return (-1);
   // }
-  std::cout << "Loaded " << input_cloud->size()
-            << " data points from room_scan2.pcd" << std::endl;
+  std::cout << "Loaded " << input_cloud->size() <<
+    " data points from room_scan2.pcd" << std::endl;
 
   // Filtering input scan to roughly 10% of original size to increase speed of
   // registration.
   pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
+    new pcl::PointCloud<pcl::PointXYZ>);
   pcl::ApproximateVoxelGrid<pcl::PointXYZ> approximate_voxel_filter;
   approximate_voxel_filter.setLeafSize(0.2, 0.2, 0.2);
   approximate_voxel_filter.setInputCloud(input_cloud);
   approximate_voxel_filter.filter(*filtered_cloud);
-  std::cout << "Filtered cloud contains " << filtered_cloud->size()
-            << " data points from room_scan2.pcd" << std::endl;
+  std::cout << "Filtered cloud contains " << filtered_cloud->size() <<
+    " data points from room_scan2.pcd" << std::endl;
 
   // Setting point cloud to be aligned.
   ndt.setInputSource(filtered_cloud);
@@ -84,16 +88,17 @@ void NdtLib::point_cloud_scan_callback(
   // Calculating required rigid transform to align the input cloud to the target
   // cloud.
   pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
+    new pcl::PointCloud<pcl::PointXYZ>);
   ndt.align(*output_cloud, init_guess);
 
-  std::cout << "Normal Distributions Transform has converged:"
-            << ndt.hasConverged() << " score: " << ndt.getFitnessScore()
-            << std::endl;
+  std::cout << "Normal Distributions Transform has converged:" <<
+    ndt.hasConverged() << " score: " << ndt.getFitnessScore() <<
+    std::endl;
 }
 
 // Temporarly disable this function until it's refactored
-int NdtLib::run_ndt_matching() {
+int NdtLib::run_ndt_matching()
+{
   /*
   // Transforming unfiltered, input cloud using found transform.
   pcl::transformPointCloud(*input_cloud, *output_cloud,
@@ -133,7 +138,7 @@ int NdtLib::run_ndt_matching() {
     std::this_thread::sleep_for(100ms);
   }
   */
-  return (0);
+  return 0;
 }
 
 NdtLib::~NdtLib() {}
