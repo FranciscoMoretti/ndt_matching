@@ -84,6 +84,11 @@ private:
     // Create a callback function for when messages are received.
     // Variations of this function also exist using, for example UniquePtr for
     // zero-copy transport.
+    
+    // Wait until the map is loaded before processing a scan
+    if(!map_loaded){
+      return;
+    }
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
       msg->header.frame_id.c_str());
     // TODO:
