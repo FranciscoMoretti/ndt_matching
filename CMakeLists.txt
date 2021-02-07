@@ -21,6 +21,7 @@ find_package(ament_cmake_ros REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(PCL 1.5 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils)
@@ -54,6 +55,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_executable(ndt_node src/ndt_node.cpp)
 
 ament_target_dependencies(ndt_node
+  "geometry_msgs"
   "rclcpp"
   "std_msgs"
   "sensor_msgs"

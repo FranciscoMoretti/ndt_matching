@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdio>
 #include <memory>
 #include <string>
@@ -6,6 +7,7 @@
 #include "rcutils/cmdline_parser.h"
 #include "std_msgs/msg/string.hpp"
 #include "ndt_matching/ndt_lib.hpp"
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -31,7 +33,7 @@ public:
   : Node("listener")
   {
 
-    ndtlib = ndt_matching::NdtLib();
+    ndt_matching_localizer = ndt_matching::NdtLib();
 
     // Create a subscription to the topic which can be matched with one or more
     // compatible ROS publishers. Note that not all publishers on the same topic
@@ -45,13 +47,19 @@ public:
       std::bind(&Listener::map_callback, this, std::placeholders::_1));
     // TODO: create a pose publisher, see for reference
     // https://github.com/ros2/demos/blob/master/demo_nodes_cpp/src/topics/talker.cpp
+      publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose_estimation", 10);
+          timer_ = this->create_wall_timer( std::chrono::milliseconds(500), std::bind(&Listener::timer_callback, this));
+
   }
 
 private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub2_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_;
 
-  ndt_matching::NdtLib ndtlib;
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  ndt_matching::NdtLib ndt_matching_localizer;
   bool map_loaded = false;
 
   void map_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
@@ -67,7 +75,7 @@ private:
       new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*msg,*plc_point_cloud);
     // Initialize the map
-    ndtlib.point_cloud_map_callback(plc_point_cloud);
+    ndt_matching_localizer.point_cloud_map_callback(plc_point_cloud);
     map_loaded = true;
   }
 
@@ -86,7 +94,18 @@ private:
       new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*msg, *plc_point_cloud);
     // Register a scan
-    ndtlib.point_cloud_scan_callback(plc_point_cloud);
+    ndt_matching_localizer.point_cloud_scan_callback(plc_point_cloud);
+  }
+
+  void timer_callback()
+  {
+    geometry_msgs::msg::PoseStamped message;
+    message.header.frame_id = "map";
+    message.pose.position.x = 1;message.pose.position.y =0;message.pose.position.z = 0;
+    message.pose.orientation.x = 0;message.pose.orientation.y = 0;message.pose.orientation.z = 0;message.pose.orientation.w = 0;
+    
+    RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.header.frame_id.c_str());
+    publisher_->publish(message);
   }
 };
 
