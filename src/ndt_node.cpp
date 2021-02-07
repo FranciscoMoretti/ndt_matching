@@ -5,7 +5,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rcutils/cmdline_parser.h"
 #include "std_msgs/msg/string.hpp"
-#include <ndt_matching/ndt_lib.hpp>
+#include "ndt_matching/ndt_lib.hpp"
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -37,10 +37,10 @@ public:
     // compatible ROS publishers. Note that not all publishers on the same topic
     // with the same type will be compatible: they must have compatible Quality
     // of Service policies.
-    sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
+    sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       topic_name, 10,
       std::bind(&Listener::scan_callback, this, std::placeholders::_1));
-    sub2_ = create_subscription<sensor_msgs::msg::PointCloud2>(
+    sub2_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       topic_name2, 1,
       std::bind(&Listener::map_callback, this, std::placeholders::_1));
     // TODO: create a pose publisher, see for reference
@@ -63,9 +63,9 @@ private:
     }
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
       msg->header.frame_id.c_str());
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud;
-    pcl::fromROSMsg(*msg, *plc_point_cloud);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud(
+      new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(*msg,*plc_point_cloud);
     // Initialize the map
     ndtlib.point_cloud_map_callback(plc_point_cloud);
     map_loaded = true;
