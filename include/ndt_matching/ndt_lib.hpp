@@ -16,10 +16,13 @@ public:
 
   virtual ~NdtLib();
 
+  void set_initial_estimation(
+    Eigen::AngleAxisf& init_rotation, Eigen::Translation3f& init_translation);
+
   void
   point_cloud_map_callback(pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud);
 
-  void
+  Eigen::Transform<float, 3, Eigen::Affine>
   point_cloud_scan_callback(pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud);
 
 private:
@@ -27,6 +30,7 @@ private:
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt =
     pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr _target_cloud = nullptr;
+  Eigen::Matrix4f _current_estimation = Eigen::Matrix4f();
 };
 
 } // namespace ndt_matching

@@ -8,9 +8,12 @@
 #include "std_msgs/msg/string.hpp"
 #include "ndt_matching/ndt_lib.hpp"
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <tf2_eigen/tf2_eigen.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tf2/convert.h>
 
 void print_usage()
 {
@@ -35,6 +38,10 @@ public:
 
     ndt_matching_localizer = ndt_matching::NdtLib();
 
+    // Temporarily hardcoded initialization
+    Eigen::AngleAxisf init_rotation(4.9, Eigen::Vector3f::UnitZ());
+    Eigen::Translation3f init_translation(2, -50, 0);
+    ndt_matching_localizer.set_initial_estimation(init_rotation, init_translation);
     // Create a subscription to the topic which can be matched with one or more
     // compatible ROS publishers. Note that not all publishers on the same topic
     // with the same type will be compatible: they must have compatible Quality
@@ -45,11 +52,7 @@ public:
     sub2_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       topic_name2, 1,
       std::bind(&Listener::map_callback, this, std::placeholders::_1));
-    // TODO: create a pose publisher, see for reference
-    // https://github.com/ros2/demos/blob/master/demo_nodes_cpp/src/topics/talker.cpp
       publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose_estimation", 10);
-          timer_ = this->create_wall_timer( std::chrono::milliseconds(500), std::bind(&Listener::timer_callback, this));
-
   }
 
 private:
@@ -90,7 +93,7 @@ private:
       return;
     }
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
-      msg->header.frame_id.c_str());
+    msg->header.frame_id.c_str());
     // TODO:
     // here you call NdtLib function and pass in the msg as input
     // return a pose message and publish it as
@@ -99,19 +102,26 @@ private:
       new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*msg, *plc_point_cloud);
     // Register a scan
-    ndt_matching_localizer.point_cloud_scan_callback(plc_point_cloud);
-  }
+    Eigen::Affine3d eigen_pose = 
+      ndt_matching_localizer.point_cloud_scan_callback(plc_point_cloud).cast<double>();
+    
 
-  void timer_callback()
-  {
+    geometry_msgs::msg::Pose pose_message = tf2::toMsg(eigen_pose);
     geometry_msgs::msg::PoseStamped message;
     message.header.frame_id = "map";
-    message.pose.position.x = 1;message.pose.position.y =0;message.pose.position.z = 0;
-    message.pose.orientation.x = 0;message.pose.orientation.y = 0;message.pose.orientation.z = 0;message.pose.orientation.w = 0;
+    message.header.stamp = msg->header.stamp;
+    message.pose = pose_message;
     
     RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.header.frame_id.c_str());
     publisher_->publish(message);
-  }
+    std::cout << "-----------------------------------------------------------------" << std::endl;
+    std::cout << "(x,y,z)(x,y,z,w):" << std::endl;
+    std::cout << "(" << pose_message.position.x << ", " << pose_message.position.y << ", "
+              << pose_message.position.z << ")(" << pose_message.orientation.x
+              << ", " << pose_message.orientation.y << ", " << pose_message.orientation.z << ", "
+              <<  pose_message.orientation.z << ")" << std::endl;
+    std::cout << "-----------------------------------------------------------------" << std::endl;
+    }
 };
 
 int main(int argc, char * argv[])

@@ -48,7 +48,12 @@ void NdtLib::point_cloud_map_callback(
   ndt.setInputTarget(target_cloud);
 }
 
-void NdtLib::point_cloud_scan_callback(
+void NdtLib::set_initial_estimation( Eigen::AngleAxisf& init_rotation, Eigen::Translation3f& init_translation){
+  // Set initial alignment estimate found using robot odometry.
+  _current_estimation = (init_translation * init_rotation).matrix();
+}
+
+Eigen::Transform<float, 3, Eigen::Affine> NdtLib::point_cloud_scan_callback(
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud)
 {
 
@@ -80,20 +85,23 @@ void NdtLib::point_cloud_scan_callback(
   // Setting point cloud to be aligned.
   ndt.setInputSource(filtered_cloud);
 
-  // Set initial alignment estimate found using robot odometry.
-  Eigen::AngleAxisf init_rotation(0.6931 + 1.8, Eigen::Vector3f::UnitZ());
-  Eigen::Translation3f init_translation(1.79387, 0.720047, 0);
-  Eigen::Matrix4f init_guess = (init_translation * init_rotation).matrix();
-
   // Calculating required rigid transform to align the input cloud to the target
   // cloud.
   pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(
     new pcl::PointCloud<pcl::PointXYZ>);
-  ndt.align(*output_cloud, init_guess);
+  ndt.align(*output_cloud, _current_estimation);
 
   std::cout << "Normal Distributions Transform has converged:" <<
     ndt.hasConverged() << " score: " << ndt.getFitnessScore() <<
     std::endl;
+
+  _current_estimation = ndt.getFinalTransformation();
+  Eigen::Transform<float, 3, Eigen::Affine> t (_current_estimation);
+
+  std::cout << "Transformation Matrix:" << std::endl;
+  std::cout << _current_estimation << std::endl;
+  return t;
+
 }
 
 NdtLib::~NdtLib() {}
