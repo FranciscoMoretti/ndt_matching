@@ -19,18 +19,6 @@ void print_usage() {
          "chatter.\n");
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr
-cloud_cb(const sensor_msgs::msg::PointCloud2::SharedPtr &input) {
-
-  pcl::PCLPointCloud2 pcl_pc2;
-  pcl_conversions::toPCL(*input, pcl_pc2);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromPCLPointCloud2(pcl_pc2, *temp_cloud);
-  // do stuff with temp_cloud here
-  return temp_cloud;
-}
-
 // Create a Listener class that subclasses the generic rclcpp::Node base class.
 // The main function below will instantiate the class as a ROS node.
 class Listener : public rclcpp::Node {
@@ -82,7 +70,9 @@ private:
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
                 msg->header.frame_id.c_str());
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud = cloud_cb(msg);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud(
+        new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(*msg, *plc_point_cloud);
     ndtlib.point_cloud_map_callback(plc_point_cloud);
   }
 };
