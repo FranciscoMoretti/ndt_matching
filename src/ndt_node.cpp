@@ -49,7 +49,7 @@ public:
     sub2_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       topic_name2, 1,
       std::bind(&Listener::map_callback, this, std::placeholders::_1));
-    sub3_ = this->create_subscription<geometry_msgs::msg::Pose>(
+    sub3_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
       topic_name3, 1,
       std::bind(&Listener::initial_pose_callback, this, std::placeholders::_1));
     publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose_estimation", 10);
@@ -58,13 +58,14 @@ public:
 private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub2_;
-  rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr sub3_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub3_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 
   ndt_matching::NdtLib ndt_matching_localizer;
   bool map_loaded = false;
+  bool initial_pose_set = false;
 
   void map_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
   {
@@ -90,7 +91,7 @@ private:
     // zero-copy transport.
     
     // Wait until the map is loaded before processing a scan
-    if(!map_loaded){
+    if(!map_loaded || !initial_pose_set){
       return;
     }
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
@@ -124,18 +125,23 @@ private:
     std::cout << "-----------------------------------------------------------------" << std::endl;
   }
 
-  void initial_pose_callback(const geometry_msgs::msg::Pose::SharedPtr msg)
+  void initial_pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
   {
+    // Only set the initial pose once
+    if(initial_pose_set){
+      return;
+    }
     // Set the initial pose estimation
     RCLCPP_INFO(this->get_logger(), "I heard: initial_pose");
 
     Eigen::Affine3f affine_f = Eigen::Affine3f(
-      Eigen::Translation3f(msg->position.x, msg->position.y, msg->position.z) *
-      Eigen::Quaternionf(msg->orientation.w,
-                         msg->orientation.x,
-                         msg->orientation.y,
-                         msg->orientation.z));
+      Eigen::Translation3f(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z) *
+      Eigen::Quaternionf(msg->pose.orientation.w,
+                         msg->pose.orientation.x,
+                         msg->pose.orientation.y,
+                         msg->pose.orientation.z));
     ndt_matching_localizer.set_initial_estimation(affine_f);
+    initial_pose_set = true;
   }
 };
 
