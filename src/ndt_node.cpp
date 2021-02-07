@@ -34,12 +34,11 @@ public:
     // zero-copy transport.
     auto callback =
         [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) -> void {
-      RCLCPP_INFO(this->get_logger(), "I heard: [%s]",
-                  msg->header.frame_id.c_str());
       // TODO:
       // here you call NdtLib function and pass in the msg as input
       // return a pose message and publish it as
       // https://github.com/ros2/common_interfaces/blob/master/geometry_msgs/msg/PoseStamped.msg
+      this->scan_callback(msg);
     };
 
     auto callback2 =
@@ -65,15 +64,33 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub2_;
 
   ndt_matching::NdtLib ndtlib;
+  bool map_loaded = false;
 
   void map_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+    // Only load the map once
+    if (map_loaded) {
+      return;
+    }
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
                 msg->header.frame_id.c_str());
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud(
         new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*msg, *plc_point_cloud);
+    // Initialize the map
     ndtlib.point_cloud_map_callback(plc_point_cloud);
+    map_loaded = true;
+  }
+
+  void scan_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+    RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
+                msg->header.frame_id.c_str());
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud(
+        new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(*msg, *plc_point_cloud);
+    // Register a scan
+    ndtlib.point_cloud_scan_callback(plc_point_cloud);
   }
 };
 

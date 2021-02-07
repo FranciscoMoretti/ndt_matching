@@ -45,19 +45,20 @@ void NdtLib::point_cloud_map_callback(
   ndt.setInputTarget(target_cloud);
 }
 
-int NdtLib::run_ndt_matching() {
+void NdtLib::point_cloud_scan_callback(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud) {
 
   // Loading second scan of room from new perspective.
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
-  if (pcl::io::loadPCDFile<pcl::PointXYZ>("1517813094204086.pcd",
-                                          *input_cloud) == -1)
-  // if (pcl::io::loadPCDFile<pcl::PointXYZ> ("room_scan2.pcd", *input_cloud) ==
-  // -1
-  {
-    PCL_ERROR("Couldn't read file room_scan2.pcd \n");
-    return (-1);
-  }
+
+  // if (pcl::io::loadPCDFile<pcl::PointXYZ>("1517813094204086.pcd",
+  //                                         *input_cloud) == -1)
+  // // if (pcl::io::loadPCDFile<pcl::PointXYZ> ("room_scan2.pcd", *input_cloud)
+  // ==
+  // // -1
+  // {
+  //   PCL_ERROR("Couldn't read file room_scan2.pcd \n");
+  //   return (-1);
+  // }
   std::cout << "Loaded " << input_cloud->size()
             << " data points from room_scan2.pcd" << std::endl;
 
@@ -89,7 +90,11 @@ int NdtLib::run_ndt_matching() {
   std::cout << "Normal Distributions Transform has converged:"
             << ndt.hasConverged() << " score: " << ndt.getFitnessScore()
             << std::endl;
+}
 
+// Temporarly disable this function until it's refactored
+int NdtLib::run_ndt_matching() {
+  /*
   // Transforming unfiltered, input cloud using found transform.
   pcl::transformPointCloud(*input_cloud, *output_cloud,
                            ndt.getFinalTransformation());
@@ -127,6 +132,7 @@ int NdtLib::run_ndt_matching() {
     viewer_final->spinOnce(100);
     std::this_thread::sleep_for(100ms);
   }
+  */
   return (0);
 }
 

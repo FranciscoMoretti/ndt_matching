@@ -17,6 +17,9 @@ public:
   void
   point_cloud_map_callback(pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud);
 
+  void
+  point_cloud_scan_callback(pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud);
+
   int run_ndt_matching();
 
 private:
