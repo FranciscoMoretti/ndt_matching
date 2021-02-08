@@ -28,6 +28,11 @@ find_package(rcutils)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
+add_library(ndt_simplified src/ndt_simplified.cpp)
+target_include_directories(ndt_simplified PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
 add_library(ndt_lib src/ndt_lib.cpp)
 target_include_directories(ndt_lib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -35,6 +40,8 @@ target_include_directories(ndt_lib PUBLIC
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
+target_compile_definitions(ndt_simplified PRIVATE "NDT_MATCHING_BUILDING_LIBRARY")
+
 target_compile_definitions(ndt_lib PRIVATE "NDT_MATCHING_BUILDING_LIBRARY")
 
 install(
@@ -42,13 +49,19 @@ install(
   DESTINATION include
 )
 install(
-  TARGETS ndt_lib
+  TARGETS ndt_lib 
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
-
+install(
+  TARGETS ndt_simplified
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
 include_directories(SYSTEM ${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 
@@ -64,7 +77,7 @@ ament_target_dependencies(ndt_node
 target_include_directories(ndt_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(ndt_node ndt_lib ${PCL_LIBRARIES})
+target_link_libraries(ndt_node ndt_lib ndt_simplified ${PCL_LIBRARIES})
 
 install(TARGETS ndt_node
   EXPORT export_${PROJECT_NAME}
@@ -88,7 +101,7 @@ ament_export_interfaces(
   export_${PROJECT_NAME}
 )
 ament_export_libraries(
-  ndt_lib
+  ndt_lib ndt_simplified
 )
 
 ament_package()
