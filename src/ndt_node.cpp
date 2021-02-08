@@ -78,7 +78,7 @@ private:
       msg->header.frame_id.c_str());
     pcl::PointCloud<pcl::PointXYZ>::Ptr plc_point_cloud(
       new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromROSMsg(*msg,*plc_point_cloud);
+    pcl::fromROSMsg(*msg, *plc_point_cloud);
     // Initialize the map
     ndt_matching_localizer.point_cloud_map_callback(plc_point_cloud);
     map_loaded = true;
@@ -89,13 +89,13 @@ private:
     // Create a callback function for when messages are received.
     // Variations of this function also exist using, for example UniquePtr for
     // zero-copy transport.
-    
+
     // Wait until the map is loaded before processing a scan
-    if(!map_loaded || !initial_pose_set){
+    if (!map_loaded || !initial_pose_set) {
       return;
     }
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",
-    msg->header.frame_id.c_str());
+      msg->header.frame_id.c_str());
     // TODO:
     // here you call NdtLib function and pass in the msg as input
     // return a pose message and publish it as
@@ -104,7 +104,7 @@ private:
       new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*msg, *plc_point_cloud);
     // Register a scan
-    Eigen::Affine3d eigen_pose = 
+    Eigen::Affine3d eigen_pose =
       ndt_matching_localizer.point_cloud_scan_callback(plc_point_cloud).cast<double>();
 
 
@@ -113,22 +113,22 @@ private:
     message.header.frame_id = "map";
     message.header.stamp = msg->header.stamp;
     message.pose = pose_message;
-    
+
     RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.header.frame_id.c_str());
     publisher_->publish(message);
     std::cout << "-----------------------------------------------------------------" << std::endl;
     std::cout << "(x,y,z)(x,y,z,w):" << std::endl;
-    std::cout << "(" << pose_message.position.x << ", " << pose_message.position.y << ", "
-              << pose_message.position.z << ")(" << pose_message.orientation.x
-              << ", " << pose_message.orientation.y << ", " << pose_message.orientation.z << ", "
-              <<  pose_message.orientation.z << ")" << std::endl;
+    std::cout << "(" << pose_message.position.x << ", " << pose_message.position.y << ", " <<
+      pose_message.position.z << ")(" << pose_message.orientation.x <<
+      ", " << pose_message.orientation.y << ", " << pose_message.orientation.z << ", " <<
+      pose_message.orientation.z << ")" << std::endl;
     std::cout << "-----------------------------------------------------------------" << std::endl;
   }
 
   void initial_pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
   {
     // Only set the initial pose once
-    if(initial_pose_set){
+    if (initial_pose_set) {
       return;
     }
     // Set the initial pose estimation
@@ -137,9 +137,9 @@ private:
     Eigen::Affine3f affine_f = Eigen::Affine3f(
       Eigen::Translation3f(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z) *
       Eigen::Quaternionf(msg->pose.orientation.w,
-                         msg->pose.orientation.x,
-                         msg->pose.orientation.y,
-                         msg->pose.orientation.z));
+      msg->pose.orientation.x,
+      msg->pose.orientation.y,
+      msg->pose.orientation.z));
     ndt_matching_localizer.set_initial_estimation(affine_f);
     initial_pose_set = true;
   }

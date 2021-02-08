@@ -1,4 +1,5 @@
 #include "ndt_matching/ndt_lib.hpp"
+#include "ndt_matching/ndt_simplified.hpp"
 
 #include <iostream>
 #include <thread>
