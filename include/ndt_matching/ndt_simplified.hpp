@@ -37,12 +37,15 @@ private:
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_ = nullptr;
   pcl::PointCloud<pcl::PointXYZ>::Ptr target_ = nullptr;
+  Eigen::Matrix<float, 4, 4> previous_transformation_;
+  Eigen::Matrix<float, 4, 4> transformation_;
   Eigen::Matrix<float, 4, 4> final_transformation_;
 
   float resolution_;
   double step_size_;
   int max_iterations_;
-  float epsilon_;
+  float transformation_epsilon_;
+  float outlier_ratio_;
 
   int nr_iterations_;
   bool converged_;
@@ -54,26 +57,43 @@ private:
   Eigen::Matrix<double, 3, 6> point_jacobian_;
   Eigen::Matrix<double, 18, 6> point_hessian_;
 
+  void computeTransformation(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr & output, const Eigen::Matrix<float, 4,
+    4> & guess);
+
   void initiateVoxels();
 
   double computeDerivatives(
-    Eigen::Matrix<double, 6, 1>& score_gradient,
-    Eigen::Matrix<double, 6, 6>& hessian,
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr& trans_cloud,
-    const Eigen::Matrix<double, 6, 1>& transform,
-    bool compute_hessian);
+    Eigen::Matrix<double, 6, 1> & score_gradient,
+    Eigen::Matrix<double, 6, 6> & hessian,
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr & trans_cloud,
+    const Eigen::Matrix<double, 6, 1> & transform,
+    bool compute_hessian = true);
 
   void computePointDerivatives(
-    const Eigen::Vector3d& x, bool compute_hessian = true);
+    const Eigen::Vector3d & x, bool compute_hessian = true);
 
   void computeAngleDerivatives(
-    const Eigen::Matrix<double, 6, 1>& transform, bool compute_hessian = true);
+    const Eigen::Matrix<double, 6, 1> & transform, bool compute_hessian = true);
 
-  double updateDerivatives(Eigen::Matrix<double, 6, 1>& score_gradient,
-                    Eigen::Matrix<double, 6, 6>& hessian,
-                    const Eigen::Vector3d& x_trans,
-                    const Eigen::Matrix3d& c_inv,
-                    bool compute_hessian = true) const;
+  double updateDerivatives(
+    Eigen::Matrix<double, 6, 1> & score_gradient,
+    Eigen::Matrix<double, 6, 6> & hessian,
+    const Eigen::Vector3d & x_trans,
+    const Eigen::Matrix3d & c_inv,
+    bool compute_hessian = true) const;
+
+  double
+  computeStepLengthMT(
+    const Eigen::Matrix<double, 6, 1> & transform,
+    Eigen::Matrix<double, 6, 1> & step_dir,
+    double step_init,
+    double step_max,
+    double step_min,
+    double & score,
+    Eigen::Matrix<double, 6, 1> & score_gradient,
+    Eigen::Matrix<double, 6, 6> & hessian,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr & trans_cloud);
 };
 
 } // namespace ndt_matching
