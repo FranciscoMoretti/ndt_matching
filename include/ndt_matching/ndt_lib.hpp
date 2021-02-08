@@ -16,7 +16,7 @@ public:
 
   virtual ~NdtLib();
 
-  void set_initial_estimation(Eigen::Transform<float, 3, Eigen::Affine>& init_estimation);
+  void set_initial_estimation(Eigen::Transform<float, 3, Eigen::Affine> & init_estimation);
 
   void
   point_cloud_map_callback(pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud);
